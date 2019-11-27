@@ -62,6 +62,10 @@ spec:
     - mkdir -p /home/ubuntu/.kube
     - cp /etc/kubernetes/admin.conf /home/ubuntu/.kube/config
     - chown ubuntu:ubuntu /home/ubuntu/.kube/config
+    - kubectl --kubeconfig /home/ubuntu/.kube/config taint nodes --all node-role.kubernetes.io/master-
+    - curl https://docs.projectcalico.org/v3.10/manifests/calico.yaml -O
+    - POD_CIDR="192.168.0.0/18" sed -i -e "s?192.168.0.0/16?$POD_CIDR?g" calico.yaml
+    - kubectl --kubeconfig /home/ubuntu/.kube/config apply -f calico.yaml
   files:
       - path: /etc/keepalived/keepalived.conf
         content: |
