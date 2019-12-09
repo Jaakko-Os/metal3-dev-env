@@ -34,7 +34,7 @@ BMOBRANCH="${BMOBRANCH:-master}"
 CAPBMREPO="${CAPBMREPO:-https://github.com/metal3-io/cluster-api-provider-baremetal.git}"
 
 if [ "${V1ALPHA2_SWITCH}" == true ]; then
-  CAPBMBRANCH="${CAPBMBRANCH:-v1alpha2}"
+  CAPBMBRANCH="${CAPBMBRANCH:-test/pivoting-kashif}"
 else
   CAPBMBRANCH="${CAPBMBRANCH:-master}"
 fi

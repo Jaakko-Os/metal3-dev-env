@@ -58,6 +58,7 @@ spec:
     - apt update
     - apt install -y kubelet kubeadm kubectl
     - systemctl enable --now kubelet
+    - sudo ip addr add 172.22.0.2/24 dev enp1s0
   postKubeadmCommands:
     - mkdir -p /home/ubuntu/.kube
     - cp /etc/kubernetes/admin.conf /home/ubuntu/.kube/config
@@ -66,6 +67,7 @@ spec:
     - curl https://docs.projectcalico.org/v3.10/manifests/calico.yaml -O
     - POD_CIDR="192.168.0.0/18" sed -i -e "s?192.168.0.0/16?$POD_CIDR?g" calico.yaml
     - kubectl --kubeconfig /home/ubuntu/.kube/config apply -f calico.yaml
+    - echo "ubuntu:123456" | sudo chpasswd
   files:
       - path: /etc/keepalived/keepalived.conf
         content: |
