@@ -140,12 +140,15 @@ spec:
       apiServer:
         extraArgs:
     preKubeadmCommands:
+      - mv /tmp/nmstate.yaml /home/ubuntu/nmstate.yaml
       - ip link set dev enp2s0 up
       - dhclient enp2s0
       - mv /tmp/akeys /home/ubuntu/.ssh/authorized_keys
       - chown ubuntu:ubuntu /home/ubuntu/.ssh/authorized_keys
       - apt update -y
-      - netplan apply
+{% if CAPI_VERSION != 'v1alpha4' %}
+        - netplan apply
+{% endif %}
       - >-
         apt install net-tools gcc linux-headers-$(uname -r) bridge-utils
         apt-transport-https ca-certificates curl gnupg-agent
@@ -188,6 +191,11 @@ spec:
                     {{ CLUSTER_APIENDPOINT_HOST }}
                 }
             }
+        - path: /tmp/akeys
+          owner: root:root
+          permissions: '0644'
+          content: {{ SSH_PUB_KEY_CONTENT }}
+{% if CAPI_VERSION != 'v1alpha4' %}
         - path: /etc/netplan/50-cloud-init.yaml
           owner: root:root
           permissions: '0644'
@@ -197,10 +205,6 @@ spec:
                     enp2s0:
                         dhcp4: true
                 version: 2
-        - path: /tmp/akeys
-          owner: root:root
-          permissions: '0644'
-          content: {{ SSH_PUB_KEY_CONTENT }}
         - path : /etc/netplan/60-ironicendpoint.yaml
           owner: root:root
           permissions: '0644'
@@ -208,11 +212,73 @@ spec:
             network:
               version: 2
               renderer: networkd
+              ethernets:
+                  enp1s0:
+                      dhcp4: false
               bridges:
                 ironicendpoint:
                   interfaces: [enp1s0]
                   dhcp4: yes
-
+{% else %}
+        - path : /tmp/nmstate.yaml
+          owner: root:root
+          permissions: '0644'
+          content: |
+            interfaces:
+            - description: Provisioning
+              ethernet:
+                auto-negotiation: true
+                duplex: full
+                speed: 1000
+              ipv4:
+                address:
+                - ip: {{ '{{ ds.meta_data.net1_ip }}' }}
+                  prefix-length: 24
+                enabled: true
+                dhcp: false
+              ipv6:
+                address:
+                - ip: {{ '{{ ds.meta_data.net1_ip6 }}' }}
+                  prefix-length: 64
+                enabled: true
+              mtu: 1500
+              name: eth0
+              state: up
+              type: ethernet
+            - description: Baremetal
+              ethernet:
+                auto-negotiation: true
+                duplex: full
+                speed: 1000
+              ipv4:
+                address:
+                - ip: {{ '{{ ds.meta_data.net2_ip }}' }}
+                  prefix-length: 24
+                enabled: true
+                dhcp: false
+              ipv6:
+                address:
+                - ip: {{ '{{ ds.meta_data.net2_ip6 }}' }}
+                  prefix-length: 64
+                enabled: true
+              mtu: 1500
+              name: eth1
+              state: up
+              type: ethernet
+            routes:
+              config:
+              - destination: 0.0.0.0/0
+                next-hop-address: 192.16.111.1
+                next-hop-interface: eth1
+              - destination: ::/0
+                next-hop-address: 2001:0db8:85a3::1
+                next-hop-interface: eth1
+            dns-resolver:
+              config:
+                server:
+                - 2001:4860:4860::8888
+                - 8.8.8.8
+{% endif %}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/{{ CAPI_VERSION }}
 kind: Metal3MachineTemplate
@@ -224,4 +290,42 @@ spec:
       image:
         url: {{ IMAGE_URL }}
         checksum: {{ IMAGE_CHECKSUM }}
+{% if CAPI_VERSION == 'v1alpha4' %}
+      dataTemplate:
+        name: {{ CLUSTER_NAME }}-cp-template
+---
+apiVersion: infrastructure.cluster.x-k8s.io/{{ CAPI_VERSION }}
+kind: Metal3DataTemplate
+metadata:
+  name: {{ CLUSTER_NAME }}-cp-template
+spec:
+  metaData: |
+    name: {{ '{{ machineName }}' }}
+    local-hostname: {{ '{{ machineName }}' }}
+    local_hostname: {{ '{{ machineName }}' }}
+    net1_ip: '172.22.0.{{ '{{ indexWithOffset 20 }}' }}'
+    net1_ip6: 'fd2e:6f44:5dd8:b856::{{ '{{ indexWithOffsetAndStepHex 20 10 }}' }}'
+    net2_ip: '192.168.111.{{ '{{ indexWithOffset 20 }}' }}'
+    net2_ip6: '2001:0db8:85a3::{{ '{{ indexWithOffsetAndStepHex 20 10 }}' }}'
+  networkData: |
+    version: 2
+    renderer: networkd
+    ethernets:
+        enp1s0:
+            dhcp4: false
+        enp2s0:
+            dhcp4: false
+            addresses:
+              - 192.168.111.{{ '{{ indexWithOffset 20 }}' }}/24
+            gateway4: 192.168.111.1
+            nameservers:
+              addresses:
+                - 8.8.8.8
+    bridges:
+      ironicendpoint:
+        interfaces: [enp1s0]
+        dhcp4: false
+        addresses:
+          - 172.22.0.{{ '{{ indexWithOffset 20 }}' }}/24
+{% endif %}
 {% endif %}

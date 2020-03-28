@@ -104,6 +104,11 @@ elif [ "${CAPI_VERSION}" == "v1alpha3" ]; then
   export CAPM3_IMAGE=${CAPM3_IMAGE:-"quay.io/metal3-io/cluster-api-provider-metal3:release-0.3"}
 else
   export CAPM3_IMAGE=${CAPM3_IMAGE:-"quay.io/metal3-io/cluster-api-provider-metal3:master"}
+  # TODO remove when testing is over
+  export BAREMETAL_OPERATOR_LOCAL_IMAGE="https://github.com/dukov/baremetal-operator"
+  export BAREMETAL_OPERATOR_LOCAL_IMAGE_BRANCH="master"
+  export CAPM3_LOCAL_IMAGE="https://github.com/nordix/cluster-api-provider-metal3.git"
+  export CAPM3_LOCAL_IMAGE_BRANCH="v1a4-mael"
 fi
 
 #default hosts memory
