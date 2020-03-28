@@ -11,7 +11,7 @@ source lib/network.sh
 eval "$(go env)"
 export GOPATH
 
-# Environment variables
+# Environment variables for repositories
 # M3PATH : Path to clone the metal3 dev env repo
 # BMOPATH : Path to clone the baremetal operator repo
 # CAPM3PATH: Path to clone the CAPI operator repo
@@ -42,11 +42,14 @@ elif [ "${CAPI_VERSION}" == "v1alpha1" ]; then
   CAPM3BRANCH="${CAPM3BRANCH:-v1alpha1}"
   CAPM3REPO="${CAPM3REPO:-https://github.com/metal3-io/cluster-api-provider-baremetal.git}"
 else
-  CAPM3BRANCH="${CAPM3BRANCH:-master}"
-  CAPM3REPO="${CAPM3REPO:-https://github.com/metal3-io/cluster-api-provider-metal3.git}"
+  #CAPM3BRANCH="${CAPM3BRANCH:-master}"
+  #CAPM3REPO="${CAPM3REPO:-https://github.com/metal3-io/cluster-api-provider-metal3.git}"
+  CAPM3BRANCH="${CAPM3BRANCH:-v1a4-test-mael}"
+  CAPM3REPO="${CAPM3REPO:-https://github.com/nordix/cluster-api-provider-metal3.git}"
 fi
 
-BMOREPO="${BMOREPO:-https://github.com/metal3-io/baremetal-operator.git}"
+BMOREPO="${BMOREPO:-https://github.com/dukov/baremetal-operator}"
+#BMOREPO="${BMOREPO:-https://github.com/metal3-io/baremetal-operator}"
 BMOBRANCH="${BMOBRANCH:-master}"
 FORCE_REPO_UPDATE="${FORCE_REPO_UPDATE:-false}"
 

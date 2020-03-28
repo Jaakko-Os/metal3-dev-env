@@ -117,6 +117,12 @@ export KUBERNETES_VERSION=${KUBERNETES_VERSION:-"v1.18.0"}
 #Kustomize version
 export KUSTOMIZE_VERSION=${KUSTOMIZE_VERSION:-"v3.2.3"}
 
+# TODO remove when testing is over
+export BAREMETAL_OPERATOR_LOCAL_IMAGE="https://github.com/dukov/baremetal-operator"
+export BAREMETAL_OPERATOR_LOCAL_IMAGE_BRANCH="master"
+export CAPM3_LOCAL_IMAGE="https://github.com/nordix/cluster-api-provider-metal3.git"
+export CAPM3_LOCAL_IMAGE_BRANCH="v1a4-test-mael"
+
 # Test and verification related variables
 SKIP_RETRIES="${SKIP_RETRIES:-false}"
 TEST_TIME_INTERVAL="${TEST_TIME_INTERVAL:-10}"

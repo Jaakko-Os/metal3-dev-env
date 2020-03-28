@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Image url and checksum
-IMAGE_OS=${IMAGE_OS:-Centos}
+IMAGE_OS=${IMAGE_OS:-Ubuntu}
 if [[ "${IMAGE_OS}" == "Ubuntu" ]]; then
   export IMAGE_NAME=${IMAGE_NAME:-bionic-server-cloudimg-amd64.img}
   export IMAGE_LOCATION=${IMAGE_LOCATION:-https://cloud-images.ubuntu.com/bionic/current}

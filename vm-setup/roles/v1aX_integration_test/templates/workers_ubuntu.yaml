@@ -56,6 +56,22 @@ spec:
       image:
         url: {{ IMAGE_URL }}
         checksum: {{ IMAGE_CHECKSUM }}
+{% if CAPI_VERSION == 'v1alpha4' %}
+      metaData:
+        configRef:
+          name: {{ CLUSTER_NAME }}-md-0-metadata
+---
+apiVersion: infrastructure.cluster.x-k8s.io/{{ CAPI_VERSION }}
+kind: Metal3Metadata
+metadata:
+  name: {{ CLUSTER_NAME }}-md-0-metadata
+spec:
+  metaData:
+    "net1_ip": '172.22.0.{{ '{{ indexWithOffset 30 }}' }}'
+    "net1_ip6": 'fd2e:6f44:5dd8:b856::{{ '{{ indexWithOffsetAndStepHex 30 10 }}' }}'
+    "net2_ip": '192.168.111.{{ '{{ indexWithOffset 30 }}' }}'
+    "net2_ip6": '2001:0db8:85a3::{{ '{{ indexWithOffsetAndStepHex 30 10 }}' }}'
+{% endif %}
 ---
 {% if CAPI_VERSION == 'v1alpha2' %}
 apiVersion: bootstrap.cluster.x-k8s.io/v1alpha2
@@ -75,6 +91,7 @@ spec:
             node-labels: 'metal3.io/uuid={{ '{{ ds.meta_data.uuid }}' }}'
             provider-id: 'metal3://{{ '{{ ds.meta_data.uuid }}' }}'
       preKubeadmCommands:
+        - mv /tmp/nmstate.yaml /home/ubuntu/nmstate.yaml
         - ip link set dev enp2s0 up
         - dhclient enp2s0
         - mv /tmp/akeys /home/ubuntu/.ssh/authorized_keys
@@ -108,3 +125,61 @@ spec:
           owner: root:root
           permissions: '0644'
           content: {{ SSH_PUB_KEY_CONTENT }}
+        - path : /tmp/nmstate.yaml
+          owner: root:root
+          permissions: '0644'
+          content: |
+            interfaces:
+            - description: Provisioning
+              ethernet:
+                auto-negotiation: true
+                duplex: full
+                speed: 1000
+              ipv4:
+                address:
+                - ip: {{ '{{ ds.meta_data.net1_ip }}' }}
+                  prefix-length: 24
+                enabled: true
+                dhcp: false
+              ipv6:
+                address:
+                - ip: {{ '{{ ds.meta_data.net1_ip6 }}' }}
+                  prefix-length: 64
+                enabled: true
+              mtu: 1500
+              name: eth0
+              state: up
+              type: ethernet
+            - description: Baremetal
+              ethernet:
+                auto-negotiation: true
+                duplex: full
+                speed: 1000
+              ipv4:
+                address:
+                - ip: {{ '{{ ds.meta_data.net2_ip }}' }}
+                  prefix-length: 24
+                enabled: true
+                dhcp: false
+              ipv6:
+                address:
+                - ip: {{ '{{ ds.meta_data.net2_ip6 }}' }}
+                  prefix-length: 64
+                enabled: true
+              mtu: 1500
+              name: eth1
+              state: up
+              type: ethernet
+            routes:
+              config:
+              - destination: 0.0.0.0/0
+                next-hop-address: 192.16.111.1
+                next-hop-interface: eth1
+              - destination: ::/0
+                next-hop-address: 2001:0db8:85a3::1
+                next-hop-interface: eth1
+            dns-resolver:
+              config:
+                server:
+                - 2001:4860:4860::8888
+                - 8.8.8.8
