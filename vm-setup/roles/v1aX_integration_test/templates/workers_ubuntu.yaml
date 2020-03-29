@@ -58,12 +58,12 @@ spec:
         checksum: {{ IMAGE_CHECKSUM }}
 {% if CAPI_VERSION == 'v1alpha4' %}
       dataTemplate:
-        name: {{ CLUSTER_NAME }}-cp-template
+        name: {{ CLUSTER_NAME }}-md-template
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/{{ CAPI_VERSION }}
 kind: Metal3DataTemplate
 metadata:
-  name: {{ CLUSTER_NAME }}-cp-template
+  name: {{ CLUSTER_NAME }}-md-template
 spec:
   metaData: |
     name: {{ '{{ machineName }}' }}
@@ -74,25 +74,49 @@ spec:
     net2_ip: '192.168.111.{{ '{{ indexWithOffset 30 }}' }}'
     net2_ip6: '2001:0db8:85a3::1:{{ '{{ indexWithOffsetAndStepHex 10 10 }}' }}'
   networkData: |
-    version: 2
-    renderer: networkd
-    ethernets:
-        enp1s0:
-            dhcp4: false
-        enp2s0:
-            dhcp4: false
-            addresses:
-              - 192.168.111.{{ '{{ indexWithOffset 30 }}' }}/24
-            gateway4: 192.168.111.1
-            nameservers:
-              addresses:
-                - 8.8.8.8
-    bridges:
-      ironicendpoint:
-        interfaces: [enp1s0]
-        dhcp4: false
-        addresses:
-          - 172.22.0.{{ '{{ indexWithOffset 30 }}' }}/24
+    {
+        "links": [
+            {
+                "id": "enp1s0",
+                "type": "phy",
+                "ethernet_mac_address": "{{ '{{ bareMetalHostMACByName "eth0" }}' }}"
+            },
+            {
+                "id": "enp2s0",
+                "type": "phy",
+                "ethernet_mac_address": "{{ '{{ bareMetalHostMACByName "eth1" }}' }}"
+            }
+        ],
+        "networks": [
+            {
+                "id": "Provisioning",
+                "type": "ipv4",
+                "link": "enp1s0",
+                "ip_address": "172.22.0.{{ '{{ indexWithOffset 30 }}' }}",
+                "netmask": "255.255.255.0"
+            },
+            {
+                "id": "Baremetal",
+                "type": "ipv4",
+                "link": "enp2s0",
+                "ip_address": "192.168.111.{{ '{{ indexWithOffset 30 }}' }}",
+                "netmask": "255.255.255.0",
+                "routes": [
+                    {
+                        "network": "0.0.0.0",
+                        "netmask": "0.0.0.0",
+                        "gateway": "192.168.111.1"
+                    }
+                ],
+            }
+        ],
+        "services": [
+            {
+                "type": "dns",
+                "address": "8.8.8.8"
+            }
+        ]
+    }
 {% endif %}
 ---
 {% if CAPI_VERSION == 'v1alpha2' %}
