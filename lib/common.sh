@@ -107,7 +107,7 @@ else
   # TODO remove when testing is over
   export BAREMETAL_OPERATOR_LOCAL_IMAGE="https://github.com/dukov/baremetal-operator"
   export BAREMETAL_OPERATOR_LOCAL_IMAGE_BRANCH="master"
-  export CAPM3_LOCAL_IMAGE="https://github.com/nordix/cluster-api-provider-metal3.git"
+  export CAPM3_LOCAL_IMAGE="https://github.com/nordix/cluster-api-provider-metal3"
   export CAPM3_LOCAL_IMAGE_BRANCH="v1a4-mael"
 fi
 
