@@ -1,0 +1,3 @@
+[submodule "metal3-docs"]
+	path = metal3-docs
+	url = git@github.com:Nordix/metal3-docs.git
