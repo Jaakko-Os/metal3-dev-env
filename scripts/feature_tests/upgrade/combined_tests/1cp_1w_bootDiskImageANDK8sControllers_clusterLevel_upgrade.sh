@@ -18,11 +18,11 @@ set_number_of_worker_node_replicas 1
 
 provision_controlplane_node
 
-controlplane_is_provisioned
+# controlplane_is_provisioned
 controlplane_has_correct_replicas 1
 
 # apply CNI
-apply_cni
+# apply_cni
 
 provision_worker_node
 worker_has_correct_replicas 1
