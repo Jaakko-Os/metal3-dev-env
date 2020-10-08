@@ -48,8 +48,10 @@
 
   # Install Ironic
   - name: Install Ironic
-    shell: "kustomize build /home/$USER/go/src/github.com/metal3-io/baremetal-operator/ironic-deployment/keepalived/ | kubectl --kubeconfig=/tmp/kubeconfig-{{ CLUSTER_NAME }}.yaml apply -n {{ NAMESPACE }} -f -"
-
+    shell: |
+      "source ./{{ metal_dir }}/lib/ironic_tls_setup.sh"
+      "source ./{{ metal_dir }}/lib/ironic_basic_auth.sh"
+      "{{ BMOPATH }}/tools/deploy.sh" "{{ DEPLOY_BMO }}" "{{ DEPLOY_IRONIC }}" "{{ DEPLOY_TLS }}" "{{ DEPLOY_BASIC_AUTH }}" "{{ DEPLOY_KEEPALIVED }}"
   - name: Pivoting test
     delegate_to: "{{ CLUSTER_APIENDPOINT_IP }}"
     vars:
