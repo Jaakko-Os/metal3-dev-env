@@ -214,12 +214,12 @@ function launch_baremetal_operator() {
   # Deploy BMO using deploy.sh script
 
   # Update container images to use local ones
-  cp "${BMOPATH}/deploy/operator/bmo.yaml" "${BMOPATH}/deploy/operator/bmo.yaml.orig"
-  update_kustomization_images "${BMOPATH}/deploy/operator/bmo.yaml"
+  cp "${BMOPATH}/config/manager/manager.yaml" "${BMOPATH}/config/manager/manager.yaml.orig"
+  update_kustomization_images "${BMOPATH}/config/manager/manager.yaml"
 
   # Update Configmap parameters with correct urls
-  cp "${BMOPATH}/deploy/default/ironic_bmo_configmap.env" "${BMOPATH}/deploy/default/ironic_bmo_configmap.env.orig"
-  cat << EOF | sudo tee "${BMOPATH}/deploy/default/ironic_bmo_configmap.env"
+  cp "${BMOPATH}/config/default/ironic.env" "${BMOPATH}/config/default/ironic.env.orig"
+  cat << EOF | sudo tee "${BMOPATH}/config/default/ironic.env"
 DEPLOY_KERNEL_URL=${DEPLOY_KERNEL_URL}
 DEPLOY_RAMDISK_URL=${DEPLOY_RAMDISK_URL}
 IRONIC_ENDPOINT=${IRONIC_URL}
@@ -230,8 +230,8 @@ EOF
   "${BMOPATH}/tools/deploy.sh" true false "${IRONIC_TLS_SETUP}" "${IRONIC_BASIC_AUTH}" true
 
   # Restore original files
-  mv "${BMOPATH}/deploy/default/ironic_bmo_configmap.env.orig" "${BMOPATH}/deploy/default/ironic_bmo_configmap.env"
-  mv "${BMOPATH}/deploy/operator/bmo.yaml.orig" "${BMOPATH}/deploy/operator/bmo.yaml"
+  mv "${BMOPATH}/config/default/ironic.env.orig" "${BMOPATH}/config/default/ironic.env"
+  mv "${BMOPATH}/config/manager/manager.yaml.orig" "${BMOPATH}/config/manager/manager.yaml.orig"
 
   # If BMO should run locally, scale down the deployment and run BMO
   if [ "${BMO_RUN_LOCAL}" = true ]; then
@@ -256,7 +256,7 @@ EOF
 
     touch bmo.out.log
     touch bmo.err.log
-    kubectl scale deployment metal3-baremetal-operator -n metal3 --replicas=0
+    kubectl scale deployment baremetal-operator-controller-manager -n metal3 --replicas=0
     nohup "${SCRIPTDIR}/hack/run-bmo-loop.sh" >> bmo.out.log 2>>bmo.err.log &
   fi
   popd
@@ -378,11 +378,11 @@ function update_capm3_imports(){
 
   # Modify the kustomization imports to use local BMO repo instead of Github Master
   cp config/bmo/kustomization.yaml config/bmo/kustomization.yaml.orig
-  FOLDERS="$(grep github.com/metal3-io/baremetal-operator/ "config/bmo/kustomization.yaml" | \
-  awk '{ print $2 }' | sed -e 's#^github.com/metal3-io/baremetal-operator/##' -e 's/?ref=.*$//')"
+  FOLDERS="$(grep https://raw.githubusercontent.com/metal3-io/baremetal-operator/master/ "config/bmo/kustomization.yaml" | \
+  awk '{ print $2 }' | sed -e 's#^https://raw.githubusercontent.com/metal3-io/baremetal-operator/master/##' )"
   BMO_REAL_PATH="$(realpath --relative-to="${CAPM3PATH}/config/bmo" "${BMOPATH}")"
   for folder in $FOLDERS; do
-    sed -i -e "s#github.com/metal3-io/baremetal-operator/${folder}?ref=.*#${BMO_REAL_PATH}/${folder}#" "config/bmo/kustomization.yaml"
+    sed -i -e "s#https://raw.githubusercontent.com/metal3-io/baremetal-operator/master/${folder}#${BMO_REAL_PATH}/${folder}#" "config/bmo/kustomization.yaml"
   done
 
   # Render the IPAM components from local repo instead of using the released version
@@ -468,7 +468,7 @@ function launch_cluster_api_provider_metal3() {
   if [ "${BMO_RUN_LOCAL}" == true ] && [ "${CAPM3_VERSION}" != "v1alpha3" ]; then
     touch bmo.out.log
     touch bmo.err.log
-    kubectl scale deployment capm3-metal3-baremetal-operator -n capm3-system --replicas=0
+    kubectl scale deployment capm3-baremetal-operator-controller-manager -n capm3-system --replicas=0
     nohup "${SCRIPTDIR}/hack/run-bmo-loop.sh" >> bmo.out.log 2>>bmo.err.log &
   fi
 
