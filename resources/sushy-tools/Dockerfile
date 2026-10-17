@@ -1,4 +1,4 @@
-FROM registry.hub.docker.com/library/python:3.8
+FROM registry.hub.docker.com/library/python:3.15
 
 RUN apt update && \
     apt install -y libvirt-dev && \
